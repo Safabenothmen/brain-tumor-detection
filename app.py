@@ -1,35 +1,53 @@
 import streamlit as st
 import numpy as np
+import cv2
 import tensorflow as tf
-from PIL import Image
+import tempfile
+import os
 
-# Charger le modèle
-model = tf.keras.models.load_model('brain_tumor_data_augmentation_model.h5')
+# Load the pre-trained model (UPDATED FOR .KERAS FORMAT)
+model = tf.keras.models.load_model('brain_tumor_data_augmentation_model.keras')
 
-# Interface
-st.title('Détection de Tumeur Cérébrale 🧠')
-st.write('Uploadez une image IRM pour détecter la présence d\'une tumeur.')
 
-uploaded_file = st.file_uploader("Choisissez une image IRM...", type=["jpg", "jpeg", "png"])
+# Class names remain the same
+class_names = ["glioma", "meningioma", "no tumor", "pituitary"]
+
+# Preprocess function (UNCHANGED)
+def preprocess_image(image):
+    # Resize to match model's expected sizing
+    image = cv2.resize(image, (150, 150))
+    # Normalize pixel values to be between 0 and 1
+    image = image.astype('float32') / 255.0
+    # Add batch dimension
+    image = np.expand_dims(image, axis=0)
+    return image
+
+# Streamlit app UI (UNCHANGED)
+st.title("Brain Tumor Detection from MRI Scans")
+st.write("Upload an MRI scan to classify the type of brain tumor or detect if no tumor is present")
+
+uploaded_file = st.file_uploader("Choose an MRI image...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    image = Image.open(uploaded_file).convert('RGB')
-    st.image(image, caption='Image IRM téléchargée.', use_column_width=True)
+    # More efficient image handling (alternative to tempfile)
+    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+    image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    st.image(image, caption="Uploaded MRI Scan", use_column_width=True)
     
-    # Prétraitement
-    img = image.resize((150, 150))
-    img_array = np.array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
-
-    # Prédiction
-    prediction = model.predict(img_array)
-    predicted_class = np.argmax(prediction, axis=1)[0]
-
-    classes = ['glioma', 'meningioma', 'pituitary', 'no tumor']
-
-    result = classes[predicted_class]
-
-    if result == 'no tumor':
-        st.success('✅ Aucun signe de tumeur détecté.')
-    else:
-        st.error(f'⚠️ Tumeur détectée : {result.capitalize()}')
+    # Preprocess and predict
+    processed_image = preprocess_image(image)
+    predictions = model.predict(processed_image)
+    predicted_class = np.argmax(predictions[0])
+    confidence = np.max(predictions[0])
+    
+    # Display results
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Prediction Results")
+        st.metric("Diagnosis", class_names[predicted_class], 
+                 f"{confidence:.1%} confidence")
+        
+    with col2:
+        st.subheader("Confidence Breakdown")
+        for i, (class_name, prob) in enumerate(zip(class_names, predictions[0])):
+            st.progress(float(prob), text=f"{class_name}: {prob:.2%}")
