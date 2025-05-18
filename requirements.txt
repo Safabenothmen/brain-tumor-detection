@@ -1,0 +1,15 @@
+# --- Core libraries ---
+streamlit
+tensorflow-cpu==2.10.0
+
+
+opencv-python-headless
+
+# --- Dev tools (debug, lint, logs, auto-reload) ---
+watchdog          # pour auto-reload Streamlit
+pylint            # pour analyser la qualité du code
+rich              # pour afficher des logs colorés et lisibles
+
+# --- Optionnel mais utile ---
+#matplotlib        # si tu veux afficher des courbes ou images
+#scikit-learn      # au cas où tu veux des métriques

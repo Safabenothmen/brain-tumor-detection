@@ -1,0 +1,28 @@
+# Utilise une image légère avec Python
+FROM python:3.10-slim
+
+
+
+# Définir le dossier de travail dans le conteneur
+WORKDIR /app
+
+# Copier les fichiers de l'application dans le conteneur
+COPY . /app
+
+# Mise à jour de pip
+#RUN pip install --upgrade pip
+
+
+# Copie les fichiers requirements en premier (meilleure gestion du cache)
+COPY requirements.txt .
+
+# Installe numpy AVANT tensorflow pour éviter les conflits
+RUN pip install numpy==1.24.4 && pip install -r requirements.txt
+
+
+
+# Activation du port par défaut de Streamlit
+EXPOSE 8501
+
+# Lancer l'application avec debug + auto-reload activé
+CMD ["streamlit", "run", "app.py", "--server.runOnSave", "true", "--logger.level=debug"]

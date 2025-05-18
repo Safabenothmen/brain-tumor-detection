@@ -1,0 +1,10 @@
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+COPY app.py .
+COPY brain_tumor_data_augmentation_model.keras .
+
+# Installe numpy AVANT tensorflow pour éviter les conflits
+RUN pip install numpy==1.24.4 && pip install -r requirements.txt
+
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]

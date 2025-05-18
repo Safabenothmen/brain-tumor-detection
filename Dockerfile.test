@@ -1,0 +1,22 @@
+# Étape 1 : Utilise l'image légère de Python
+FROM python:3.10-slim
+
+# Étape 2 : Dossier de travail
+WORKDIR /app
+
+# Étape 3 : Copier tout le code et les tests
+COPY . /app
+
+# Étape 4 : Mettre à jour pip et installer numpy d'abord
+RUN pip install --upgrade pip \
+    && pip install numpy==1.24.4
+
+# Étape 5 : Installer les dépendances de app + de tests
+RUN pip install -r requirements.txt 
+    RUN pip install pytest unittest2 mock
+
+
+
+# Étape 7 : Commande pour exécuter les tests automatiquement
+CMD ["pytest", "--maxfail=1", "--disable-warnings", "-q"]
+
